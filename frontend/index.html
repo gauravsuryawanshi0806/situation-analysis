@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Situational Analysis</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">Situational Analysis <span class="brand-sub" id="brandSub">real Yahoo Finance data, last
+        2y</span></div>
+    <nav class="top-nav" aria-label="Analysis pages">
+      <a class="top-nav-link active" href="/">Market analysis</a>
+      <a class="top-nav-link" href="/friday-monday.html">Friday → Monday</a>
+    </nav>
+    <div class="meta" id="metaLine">loading dataset…</div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="field">
+        <label>MARKET</label>
+        <select id="marketSelect">
+          <option>Loading…</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>REFERENCE SESSION</label>
+        <input type="date" id="refDate" />
+        <button id="analyzeBtn" class="btn-primary full">Analyse This Day</button>
+        <div id="dateNotice" class="date-notice" hidden></div>
+      </div>
+
+      <div class="field">
+        <label>ECONOMIC EVENTS <span class="hint">real US calendar dates</span></label>
+        <select id="econEvents">
+          <option value="">Any / None</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>GAP DIRECTION</label>
+        <div class="btn-row" data-group="gap_dir">
+          <button data-value="up">Gap Up</button>
+          <button data-value="down">Gap Down</button>
+          <button data-value="flat">Flat</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>GAP SIZE (min |gap|) <span class="hint">ⓘ</span></label>
+        <div class="btn-row" data-group="gap_size_min">
+          <button data-value="0.25">≥0.25%</button>
+          <button data-value="0.5">≥0.5%</button>
+          <button data-value="1">≥1%</button>
+          <button data-value="1.5">≥1.5%</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>OPEN VS PRIOR DAY <span class="hint">ⓘ</span></label>
+        <div class="btn-row wrap" data-group="open_vs_prior">
+          <button data-value="above_prior_high">Above Prior High</button>
+          <button data-value="below_prior_low">Below Prior Low</button>
+          <button data-value="inside_range">Inside Range</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>DAY OF WEEK</label>
+        <div class="btn-row" data-group="days" data-multi="true">
+          <button data-value="Monday">Mon</button>
+          <button data-value="Tuesday">Tue</button>
+          <button data-value="Wednesday">Wed</button>
+          <button data-value="Thursday">Thu</button>
+          <button data-value="Friday">Fri</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>FIRST 15 MIN BAR <span class="hint">only last ~60 sessions have real 15m data</span></label>
+        <div class="btn-row" data-group="first15_dir">
+          <button data-value="positive">▲ Positive</button>
+          <button data-value="negative">▼ Negative</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>SECOND 15 MIN BAR</label>
+        <div class="btn-row" data-group="second15_dir">
+          <button data-value="positive">▲ Positive</button>
+          <button data-value="negative">▼ Negative</button>
+        </div>
+      </div>
+
+      <div class="save-setup-wrap">
+        <button id="saveSetupBtn" class="btn-secondary full">Save current setup</button>
+      </div>
+      <div id="savedSetups" class="saved-setups"></div>
+      <button id="clearFiltersBtn" class="btn-secondary full">Clear filters</button>
+    </aside>
+
+    <main class="chart-area">
+      <div class="chart-header">
+        <div id="chartTitle" class="chart-title">—</div>
+        <div class="tf-row" id="tfRow">
+          <button data-tf="3min">3m</button>
+          <button data-tf="5min">5m</button>
+          <button data-tf="15min">15m</button>
+          <button data-tf="60m">1H</button>
+        </div>
+        <div class="chart-zoom" aria-label="Chart zoom controls">
+          <button id="zoomOutBtn" type="button" title="Zoom out">−</button>
+          <button id="zoomInBtn" type="button" title="Zoom in">+</button>
+        </div>
+        <div id="chartBadges" class="badges"></div>
+      </div>
+      <div id="mainChart" class="main-chart">
+        <div id="daySeparators" class="day-separators" aria-hidden="true"></div>
+      </div>
+    </main>
+
+    <section class="matches">
+      <div class="matches-header">
+        <span id="matchesCount">0 sessions</span>
+        <button id="showAllMatchesBtn" type="button" hidden>Back to matches</button>
+      </div>
+      <div id="matchesGrid" class="matches-grid"></div>
+    </section>
+
+    <aside class="detail" id="detailPanel">
+      <div class="detail-empty">Select a session to see details.</div>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

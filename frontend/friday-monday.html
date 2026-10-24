@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Friday to Monday Study · Situational Analysis</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="friday-monday.css" />
+</head>
+
+<body class="study-page">
+  <header class="topbar">
+    <div class="brand">Situational Analysis <span class="brand-sub" id="studyBrandSub">Friday/Monday historical
+        study</span></div>
+    <nav class="top-nav" aria-label="Analysis pages">
+      <a class="top-nav-link" href="/">Market analysis</a>
+      <a class="top-nav-link active" href="/friday-monday.html">Friday → Monday</a>
+    </nav>
+    <div class="meta">Friday close vs open · following Monday session</div>
+  </header>
+
+  <main class="study-main">
+    <div class="study-heading">
+      <div>
+        <h1>Friday → Monday</h1>
+        <p id="studyDescription">Compare Monday outcomes by market and Friday direction.</p>
+      </div>
+      <div class="study-filters">
+        <label class="study-filter">Market
+          <select id="studyMarket">
+            <option value="DAX40">DAX 40</option>
+          </select>
+        </label>
+        <label class="study-filter">Friday result
+          <select id="studyDirection">
+            <option value="all">All Fridays</option>
+            <option value="negative">Negative</option>
+            <option value="positive">Positive</option>
+            <option value="flat">Flat</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <section id="studySummary" class="study-summary" aria-live="polite">
+      <div class="study-loading">Loading Friday–Monday history…</div>
+    </section>
+
+    <section class="monday-playbook" aria-labelledby="playbookTitle">
+      <div class="playbook-heading">
+        <div>
+          <h2 id="playbookTitle">Monday rules for this Friday type</h2>
+          <p id="playbookReason">Loading the historical comparison…</p>
+        </div>
+        <span id="playbookBias" class="playbook-bias">—</span>
+      </div>
+      <div class="playbook-rules">
+        <div><strong>Long setup</strong>
+          <p id="longRule">Loading strategy rules…</p>
+        </div>
+        <div><strong>Short setup</strong>
+          <p id="shortRule">Loading strategy rules…</p>
+        </div>
+        <div><strong>Risk / no-trade</strong>
+          <p id="riskRule">Loading risk rules…</p>
+        </div>
+      </div>
+      <p id="playbookCaveat" class="playbook-caveat">The bias is a historical filter, not a prediction. It requires at least 20
+        Friday–Monday pairs and a 10 percentage-point edge between positive and negative Mondays; flat Mondays are
+        excluded from that edge calculation.</p>
+    </section>
+
+    <section class="study-results">
+      <div class="study-results-heading">
+        <h2>Recent Friday–Monday pairs</h2>
+        <span id="studyPairCount"></span>
+      </div>
+      <div class="study-table-wrap">
+        <table class="study-table">
+          <thead>
+            <tr>
+              <th>Friday</th>
+              <th>Friday direction</th>
+              <th>Friday move</th>
+              <th>Monday</th>
+              <th>Monday direction</th>
+              <th>Monday move</th>
+              <th>Monday gap</th>
+              <th id="strategySignalHeading">Strategy signal</th>
+              <th id="strategyStopHeading">Stop hit</th>
+            </tr>
+          </thead>
+          <tbody id="studyRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="study-note">Friday direction is based on the full session close versus open. Each Friday is paired with
+      the next actual Monday session; Monday holidays are skipped. Strategy results are shown only when that market has
+      a configured strategy and the required intraday data is available. Historical frequencies describe this dataset
+      and do not predict future results.</p>
+  </main>
+  <script src="friday-monday.js"></script>
+</body>
+
+</html>
