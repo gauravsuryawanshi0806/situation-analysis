@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trade Journal · Situational Analysis</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="trade-journal.css" />
+</head>
+<body class="journal-page">
+  <header class="topbar">
+    <div class="brand">Situational Analysis <span class="brand-sub">Trade planning and review</span></div>
+    <nav class="top-nav" aria-label="Analysis pages">
+      <a class="top-nav-link" href="/">Market analysis</a>
+      <a class="top-nav-link" href="/friday-monday.html">Friday → Monday</a>
+      <a class="top-nav-link" href="/weekday-following.html">Weekday relationships</a>
+      <a class="top-nav-link" href="/weekday-directions.html">Weekday directions</a>
+      <a class="top-nav-link active" href="/trade-journal.html">Trade journal</a>
+    </nav>
+    <div class="meta">Saved locally in the app's backend CSV</div>
+  </header>
+
+  <main class="journal-main">
+    <section class="journal-heading">
+      <div>
+        <h1>Trade journal</h1>
+        <p>Capture the plan before entry, record what happened, and review the result.</p>
+      </div>
+      <button id="exportJournalBtn" class="btn-secondary" type="button">Export CSV</button>
+    </section>
+
+    <div id="journalNotice" class="journal-notice" role="status" aria-live="polite" hidden></div>
+    <section id="journalSummary" class="journal-summary" aria-label="Journal summary"></section>
+
+    <div class="journal-layout">
+      <section class="journal-editor panel">
+        <div class="editor-heading">
+          <div>
+            <h2 id="formTitle">New trade entry</h2>
+            <p>Save the plan first; execution and review fields can be completed later.</p>
+          </div>
+          <button id="newTradeBtn" class="btn-secondary" type="button">New entry</button>
+        </div>
+
+        <form id="journalForm">
+          <input id="tradeId" type="hidden" />
+          <fieldset class="journal-section">
+            <legend>1 · Plan and context</legend>
+            <div class="journal-fields">
+              <label>Market <select id="market" required></select></label>
+              <label>Broker instrument <input id="instrument" type="text" placeholder="Optional symbol / contract"></label>
+              <label>Strategy <input id="strategy" type="text" value="SRS" placeholder="e.g. SRS"></label>
+              <label>Setup type <input id="setup_type" type="text" placeholder="Optional setup label"></label>
+              <label>Trade date <input id="trade_date" type="date" required></label>
+              <label>Direction <select id="direction" required><option value="long">Long</option><option value="short">Short</option></select></label>
+              <label>Status <select id="status"><option value="planned">Planned</option><option value="open">Open</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option></select></label>
+              <label>Gap % <input id="gap_pct" type="number" step="0.01" placeholder="Optional"></label>
+              <label>Open vs prior day <input id="open_vs_prior" type="text" placeholder="e.g. Inside Range"></label>
+              <label>First 15m direction <select id="first15_direction"><option value="">Not recorded</option><option value="positive">Positive</option><option value="negative">Negative</option><option value="flat">Flat</option></select></label>
+              <label>Second 15m direction <select id="second15_direction"><option value="">Not recorded</option><option value="positive">Positive</option><option value="negative">Negative</option><option value="flat">Flat</option></select></label>
+              <label>Second candle high <input id="second_bar_high" type="number" step="any" placeholder="Optional"></label>
+              <label>Second candle low <input id="second_bar_low" type="number" step="any" placeholder="Optional"></label>
+              <label class="span-2">News / events <input id="economic_events" type="text" placeholder="Optional event or context"></label>
+              <label class="span-2">Chart screenshot or reference link <input id="chart_reference" type="text" placeholder="Optional local path or URL"></label>
+              <label>Planned entry <input id="planned_entry" type="number" step="any"></label>
+              <label>Planned stop <input id="planned_stop" type="number" step="any"></label>
+              <label>Planned target <input id="planned_target" type="number" step="any"></label>
+              <label>Planned size <input id="planned_size" type="number" min="0" step="any" placeholder="Units / lots"></label>
+              <label>Point value <input id="point_value" type="number" min="0" step="any" placeholder="Cash per point per unit"></label>
+              <label>Account currency <input id="account_currency" type="text" placeholder="e.g. EUR or USD"></label>
+              <div class="calculated-box"><span>Planned reward : risk</span><strong id="plannedRrPreview">—</strong></div>
+              <div class="calculated-box"><span>Estimated risk before fees</span><strong id="riskPreview">—</strong></div>
+              <label class="span-2">My analysis <textarea id="analysis" rows="3" placeholder="What conditions or evidence support this setup?"></textarea></label>
+              <label class="span-2">My expectation <textarea id="expectation" rows="2" placeholder="What do I expect price to do, and over what time? "></textarea></label>
+              <label class="span-2">Invalidation / no-trade condition <textarea id="invalidation" rows="2" placeholder="What would prove the idea wrong or make me skip it?"></textarea></label>
+              <label>Emotion before entry <select id="emotion_before"><option value="">Not recorded</option><option>Calm</option><option>Focused</option><option>Confident</option><option>Uncertain</option><option>Anxious</option><option>Frustrated</option><option>FOMO</option><option>Other</option></select></label>
+              <label>Confidence before entry (1–10) <input id="confidence_before" type="number" min="1" max="10" step="1" placeholder="Optional"></label>
+            </div>
+            <p class="field-hint">Point value depends on your broker's instrument. The estimate is shown only when size and point value are entered.</p>
+          </fieldset>
+
+          <fieldset class="journal-section">
+            <legend>2 · Execution</legend>
+            <div class="journal-fields">
+              <label>Actual entry <input id="actual_entry" type="number" step="any"></label>
+              <label>Entry time <input id="actual_entry_time" type="datetime-local"></label>
+              <label>Actual stop <input id="actual_stop" type="number" step="any"></label>
+              <label>Actual target <input id="actual_target" type="number" step="any"></label>
+              <label>Actual exit <input id="actual_exit" type="number" step="any"></label>
+              <label>Exit time <input id="actual_exit_time" type="datetime-local"></label>
+              <label>Actual size <input id="actual_size" type="number" min="0" step="any"></label>
+              <label>Fees / commission <input id="actual_fees" type="number" min="0" step="any"></label>
+              <label>Slippage (points) <input id="slippage_points" type="number" step="any"></label>
+              <label>Broker-reported P&amp;L <input id="broker_pnl" type="number" step="any"></label>
+              <label class="span-2">Exit reason <input id="exit_reason" type="text" placeholder="Target, stop, manual close, time exit…"></label>
+              <label class="span-2">Partial fills / execution notes <textarea id="execution_notes" rows="2" placeholder="Optional details for scale-ins, partial exits, or order handling."></textarea></label>
+            </div>
+          </fieldset>
+
+          <fieldset class="journal-section">
+            <legend>3 · Review</legend>
+            <div class="journal-fields">
+              <label>Did I follow my plan? <select id="followed_plan"><option value="">Not reviewed</option><option value="yes">Yes</option><option value="partly">Partly</option><option value="no">No</option></select></label>
+              <label>Emotion after trade <select id="emotion_after"><option value="">Not recorded</option><option>Calm</option><option>Satisfied</option><option>Disappointed</option><option>Frustrated</option><option>Anxious</option><option>Relieved</option><option>Other</option></select></label>
+              <label class="span-2">What happened? <textarea id="review_notes" rows="3" placeholder="Compare the actual move with your expectation."></textarea></label>
+              <label class="span-2">Lesson learned <textarea id="lesson_learned" rows="2" placeholder="What will I repeat or change next time?"></textarea></label>
+            </div>
+            <div class="realized-preview" id="realizedPreview">Enter actual entry and exit to calculate points and R. R uses the actual stop when supplied, otherwise the planned stop.</div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button class="btn-primary" type="submit" id="saveTradeBtn">Save trade</button>
+            <button class="btn-secondary" type="button" id="resetFormBtn">Clear form</button>
+            <span id="saveState" class="save-state" aria-live="polite"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="journal-list panel">
+        <div class="editor-heading list-heading">
+          <div><h2>Journal entries</h2><p id="entryCount">Loading entries…</p></div>
+        </div>
+        <div class="journal-filters">
+          <label>Search <input id="searchTrades" type="search" placeholder="Notes, instrument, strategy…"></label>
+          <label>Market <select id="filterMarket"><option value="">All markets</option></select></label>
+          <label>Status <select id="filterStatus"><option value="">All statuses</option><option value="planned">Planned</option><option value="open">Open</option><option value="closed">Closed</option><option value="cancelled">Cancelled</option></select></label>
+          <label>From <input id="filterFrom" type="date"></label>
+          <label>To <input id="filterTo" type="date"></label>
+        </div>
+        <div id="tradeList" class="trade-list" aria-live="polite"></div>
+      </section>
+    </div>
+    <p class="journal-footnote">Journal data is stored in <code>data/trade_journal.csv</code> on this app server and is excluded from Git. Risk is estimated before fees from your entered point value and size. Realized R uses one entry and one exit; partial-fill details can be recorded in execution notes, but are not weighted into the calculation.</p>
+  </main>
+  <script src="trade-journal.js"></script>
+</body>
+</html>

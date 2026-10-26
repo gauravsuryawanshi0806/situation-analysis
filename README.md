@@ -118,3 +118,26 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Then open http://localhost:8000
+
+## Trade Journal
+
+The Trade Journal page stores planned trades, execution details, and post-trade
+reviews in `data/trade_journal.csv`. The CSV is local app data and is excluded
+from Git. Use the page's Export CSV button to download a spreadsheet copy.
+
+The journal calculates planned reward-to-risk, estimated cash risk when a
+broker-specific point value and position size are supplied, realized points,
+and realized R. Realized R assumes one entry and one exit; partial-fill details
+can be recorded in execution notes but are not weighted into that calculation.
+Broker-reported P&L, fees, and slippage remain user-entered so the app does not
+assume a contract's value or execution costs.
+
+## Weekday Relationships
+
+The Weekday Relationships page compares Monday→Tuesday, Tuesday→Wednesday,
+Wednesday→Thursday, and Thursday→Friday sessions. It supports the same market
+selection as the other studies, filters pairs by the source day's direction,
+and summarizes the following session's direction, gap, and average move.
+
+The Weekday Directions page displays the open-to-close direction and percentage
+move for Monday through Friday in a weekly table, with 13 to 104 weeks available.

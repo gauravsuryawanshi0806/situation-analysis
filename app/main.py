@@ -10,11 +10,14 @@ Run with:
 from the situational-analysis/ directory.
 """
 from pathlib import Path
+from io import StringIO
 from typing import Any, Dict, List, Optional
+import csv
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
 from app.analysis import (
@@ -25,6 +28,14 @@ from app.analysis import (
     compute_stop_loss_metrics,
 )
 from app.db import get_conn
+from app.journal import (
+    CSV_FIELDS,
+    JournalTradeInput,
+    _safe_csv_value,
+    create_trade,
+    read_trades,
+    update_trade,
+)
 from data.markets import MARKETS
 from data.economic_events import ECONOMIC_EVENTS
 
@@ -320,6 +331,7 @@ def get_friday_monday_analysis(
         direction: sum(pair["monday_direction"] == direction for pair in pairs)
         for direction in ("positive", "negative", "flat")
     }
+
     directional_mondays = direction_counts["positive"] + direction_counts["negative"]
     positive_directional_pct = (
         direction_counts["positive"] / directional_mondays * 100
@@ -377,6 +389,117 @@ def get_friday_monday_analysis(
         "strategy_stop_hit_count": strategy_stop_hits,
         "strategy_stop_hit_pct": round(strategy_stop_hits / len(strategy_trades) * 100, 1) if strategy_trades else None,
         "pairs": pairs[:limit],
+    }
+
+
+@app.get("/api/analysis/weekday-following")
+def get_weekday_following_analysis(
+    market: str = Query(DEFAULT_MARKET),
+    source_day: str = Query("Monday"),
+    source_direction: str = Query("all", description="all|positive|negative|flat"),
+    limit: int = Query(100, ge=1, le=100),
+):
+    """Compare the next weekday session with its preceding weekday session."""
+    validate_market(market)
+    next_weekday = {
+        "Monday": "Tuesday",
+        "Tuesday": "Wednesday",
+        "Wednesday": "Thursday",
+        "Thursday": "Friday",
+    }
+    if source_day not in next_weekday:
+        raise HTTPException(status_code=400, detail="source_day must be Monday, Tuesday, Wednesday, or Thursday")
+    if source_direction not in {"all", "positive", "negative", "flat"}:
+        raise HTTPException(status_code=400, detail="source_direction must be all, positive, negative, or flat")
+
+    target_day = next_weekday[source_day]
+    df = load_sessions_df(market)
+    df["date_text"] = df["date"].dt.strftime("%Y-%m-%d")
+    target_rows = [row for _, row in df[df["day_of_week"] == target_day].iterrows()]
+    pairs = []
+    for _, source in df[df["day_of_week"] == source_day].iterrows():
+        source_open = float(source["session_open"])
+        source_close = float(source["day_close"])
+        if source_close > source_open:
+            direction = "positive"
+        elif source_close < source_open:
+            direction = "negative"
+        else:
+            direction = "flat"
+        if source_direction != "all" and direction != source_direction:
+            continue
+
+        target = next((row for row in target_rows if row["date"] > source["date"]), None)
+        if target is None:
+            continue
+        source_dict = session_row_to_dict(source)
+        target_dict = session_row_to_dict(target)
+        target_metrics = compute_session_metrics(target_dict)
+        pairs.append({
+            "source_date": source["date_text"],
+            "source_direction": direction,
+            "source_move_pct": round((source_close - source_open) / source_open * 100.0, 2),
+            "source_gap_dir": source_dict["gap_dir"],
+            "source_gap_pct": source_dict["gap_pct"],
+            "target_date": target_dict["date"],
+            "target_direction": target_metrics["direction"],
+            "target_move_pct": target_metrics["day_move_pct"],
+            "target_gap_dir": target_dict["gap_dir"],
+            "target_gap_pct": target_dict["gap_pct"],
+        })
+    pairs.sort(key=lambda pair: pair["source_date"], reverse=True)
+    pairs = pairs[:limit]
+    counts = {
+        direction: sum(pair["target_direction"] == direction for pair in pairs)
+        for direction in ("positive", "negative", "flat")
+    }
+    sample_count = len(pairs)
+    moves = [pair["target_move_pct"] for pair in pairs if pair["target_move_pct"] is not None]
+    return {
+        "market": market,
+        "market_name": MARKETS[market]["name"],
+        "source_day": source_day,
+        "target_day": target_day,
+        "source_direction": source_direction,
+        "sample_count": sample_count,
+        "target_direction_counts": counts,
+        "target_positive_pct": round(counts["positive"] / sample_count * 100, 1) if sample_count else None,
+        "target_negative_pct": round(counts["negative"] / sample_count * 100, 1) if sample_count else None,
+        "target_flat_pct": round(counts["flat"] / sample_count * 100, 1) if sample_count else None,
+        "target_gap_up_pct": round(sum(pair["target_gap_dir"] == "up" for pair in pairs) / sample_count * 100, 1) if sample_count else None,
+        "average_target_move_pct": round(sum(moves) / len(moves), 2) if moves else None,
+        "pairs": pairs,
+    }
+
+
+@app.get("/api/analysis/weekday-directions")
+def get_weekday_direction_table(
+    market: str = Query(DEFAULT_MARKET),
+    weeks: int = Query(26, ge=1, le=104),
+):
+    """Return session direction and percentage move in a Monday-Friday grid."""
+    validate_market(market)
+    df = load_sessions_df(market)
+    df = df[df["day_of_week"].isin(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])].copy()
+    df["week_start"] = df["date"] - pd.to_timedelta(df["date"].dt.weekday, unit="D")
+    grouped: dict[str, dict[str, Any]] = {}
+    for _, row in df.iterrows():
+        open_price = float(row["session_open"])
+        close_price = float(row["day_close"])
+        direction = "positive" if close_price > open_price else "negative" if close_price < open_price else "flat"
+        week_start = row["week_start"].strftime("%Y-%m-%d")
+        grouped.setdefault(week_start, {"week_start": week_start, "days": {}})
+        grouped[week_start]["days"][row["day_of_week"]] = {
+            "date": row["date"].strftime("%Y-%m-%d"),
+            "direction": direction,
+            "move_pct": round((close_price - open_price) / open_price * 100.0, 2),
+        }
+    result = sorted(grouped.values(), key=lambda week: week["week_start"], reverse=True)[:weeks]
+    return {
+        "market": market,
+        "market_name": MARKETS[market]["name"],
+        "week_count": len(result),
+        "weeks": result,
     }
 
 
@@ -504,6 +627,81 @@ def get_meta(market: str = Query(DEFAULT_MARKET)):
         "sessions_with_15min_bars": sessions_with_bars["15min"],
         "latest_complete_date": df[df["is_complete"]]["date"].max().strftime("%Y-%m-%d"),
     }
+
+
+@app.get("/api/journal/export.csv")
+def export_journal_csv():
+    output = StringIO(newline="")
+    writer = csv.DictWriter(output, fieldnames=CSV_FIELDS, extrasaction="ignore")
+    writer.writeheader()
+    for trade in read_trades():
+        writer.writerow({field: _safe_csv_value(field, trade.get(field)) for field in CSV_FIELDS})
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="trade_journal.csv"'},
+    )
+
+
+@app.get("/api/journal")
+def list_journal_trades(
+    market: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    q: Optional[str] = Query(None, description="Search journal notes and trade details"),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+):
+    if market:
+        validate_market(market)
+    if status and status not in {"planned", "open", "closed", "cancelled"}:
+        raise HTTPException(status_code=400, detail="Unknown journal status")
+    search_text = (q or "").strip().casefold()
+    trades = read_trades()
+    filtered = []
+    for trade in trades:
+        trade_date = str(trade.get("trade_date") or "")
+        if market and trade.get("market") != market:
+            continue
+        if status and trade.get("status") != status:
+            continue
+        if from_date and trade_date < from_date:
+            continue
+        if to_date and trade_date > to_date:
+            continue
+        if search_text and not any(search_text in str(value or "").casefold() for value in trade.values()):
+            continue
+        filtered.append(trade)
+    filtered.sort(key=lambda trade: (trade.get("trade_date") or "", trade.get("created_at") or ""), reverse=True)
+    return {"count": len(filtered), "trades": filtered}
+
+
+@app.post("/api/journal", status_code=201)
+def add_journal_trade(payload: JournalTradeInput):
+    try:
+        validate_market(payload.market)
+        return create_trade(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/journal/{trade_id}")
+def get_journal_trade(trade_id: str):
+    trade = next((item for item in read_trades() if item.get("trade_id") == trade_id), None)
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Journal entry not found")
+    return trade
+
+
+@app.put("/api/journal/{trade_id}")
+def edit_journal_trade(trade_id: str, payload: JournalTradeInput):
+    try:
+        validate_market(payload.market)
+        trade = update_trade(trade_id, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Journal entry not found")
+    return trade
 
 
 # Static frontend last, so it doesn't shadow the /api/* routes above.

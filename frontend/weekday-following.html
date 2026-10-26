@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weekday → Next Day · Situational Analysis</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="friday-monday.css" />
+</head>
+<body class="study-page weekday-study">
+  <header class="topbar">
+    <div class="brand">Situational Analysis <span class="brand-sub" id="studyBrandSub">Weekday historical study</span></div>
+    <nav class="top-nav" aria-label="Analysis pages">
+      <a class="top-nav-link" href="/">Market analysis</a>
+      <a class="top-nav-link" href="/friday-monday.html">Friday → Monday</a>
+      <a class="top-nav-link active" href="/weekday-following.html">Weekday relationships</a>
+      <a class="top-nav-link" href="/weekday-directions.html">Weekday directions</a>
+      <a class="top-nav-link" href="/trade-journal.html">Trade journal</a>
+    </nav>
+    <div class="meta">Previous session close vs open · next weekday session</div>
+  </header>
+  <main class="study-main">
+    <div class="study-heading">
+      <div>
+        <h1 id="studyTitle">Monday → Tuesday</h1>
+        <p id="studyDescription">Compare the next session after each selected weekday.</p>
+      </div>
+      <div class="study-filters">
+        <label class="study-filter">Market<select id="studyMarket"><option value="DAX40">DAX 40</option></select></label>
+        <label class="study-filter">Weekday relationship
+          <select id="sourceDay">
+            <option value="Monday">Monday → Tuesday</option>
+            <option value="Tuesday">Tuesday → Wednesday</option>
+            <option value="Wednesday">Wednesday → Thursday</option>
+            <option value="Thursday">Thursday → Friday</option>
+          </select>
+        </label>
+        <label class="study-filter"><span id="sourceDirectionLabel">Monday result</span>
+          <select id="sourceDirection">
+            <option value="all">All sessions</option>
+            <option value="negative">Negative</option>
+            <option value="positive">Positive</option>
+            <option value="flat">Flat</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <section id="studySummary" class="study-summary" aria-live="polite">
+      <div class="study-loading">Loading weekday relationships…</div>
+    </section>
+    <section class="study-results">
+      <div class="study-results-heading"><h2 id="resultsTitle">Recent weekday pairs</h2><span id="studyPairCount"></span></div>
+      <div class="study-table-wrap">
+        <table class="study-table">
+          <thead><tr><th id="sourceDateHeading">Monday</th><th id="sourceDirectionHeading">Monday direction</th><th id="sourceMoveHeading">Monday move</th><th id="sourceGapHeading">Monday gap</th><th id="targetDateHeading">Tuesday</th><th id="targetDirectionHeading">Tuesday direction</th><th id="targetMoveHeading">Tuesday move</th><th id="targetGapHeading">Tuesday gap</th></tr></thead>
+          <tbody id="studyRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <p class="study-note">Each session is paired with the next actual session on the following weekday; sessions with missing dates or market holidays are skipped. Direction uses the full session close versus open. Frequencies describe the available historical dataset and do not predict future results.</p>
+  </main>
+  <script src="weekday-following.js"></script>
+</body>
+</html>

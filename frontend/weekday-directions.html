@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weekday Directions · Situational Analysis</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="friday-monday.css" />
+</head>
+<body class="study-page weekday-study weekday-directions-page">
+  <header class="topbar">
+    <div class="brand">Situational Analysis <span class="brand-sub" id="studyBrandSub">Weekday direction history</span></div>
+    <nav class="top-nav" aria-label="Analysis pages">
+      <a class="top-nav-link" href="/">Market analysis</a>
+      <a class="top-nav-link" href="/friday-monday.html">Friday → Monday</a>
+      <a class="top-nav-link" href="/weekday-following.html">Weekday relationships</a>
+      <a class="top-nav-link active" href="/weekday-directions.html">Weekday directions</a>
+      <a class="top-nav-link" href="/trade-journal.html">Trade journal</a>
+    </nav>
+    <div class="meta">Daily close vs open · percentage move</div>
+  </header>
+  <main class="study-main">
+    <div class="study-heading">
+      <div>
+        <h1>Weekday directions</h1>
+        <p id="studyDescription">See each weekday session's direction and percentage move by trading week.</p>
+      </div>
+      <div class="study-filters">
+        <label class="study-filter">Market<select id="studyMarket"><option value="DAX40">DAX 40</option></select></label>
+        <label class="study-filter">Weeks to show
+          <select id="weekCount"><option value="13">13 weeks</option><option value="26" selected>26 weeks</option><option value="52">52 weeks</option><option value="104">104 weeks</option></select>
+        </label>
+      </div>
+    </div>
+    <section id="studySummary" class="study-summary" aria-live="polite">
+      <div class="study-loading">Loading weekday directions…</div>
+    </section>
+    <section class="study-results">
+      <div class="study-results-heading"><h2>Daily direction by week</h2><span id="weekCountLabel"></span></div>
+      <div class="study-table-wrap">
+        <table class="study-table weekday-direction-table">
+          <thead><tr><th>Week starting</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr></thead>
+          <tbody id="weekRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <p class="study-note">Direction is based on each session's close versus its open. The percentage is the session move from open to close; missing sessions, including market holidays, are shown as a dash. Historical moves describe this dataset and do not predict future results.</p>
+  </main>
+  <script src="weekday-directions.js"></script>
+</body>
+</html>
